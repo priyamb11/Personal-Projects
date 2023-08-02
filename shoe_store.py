@@ -1,3 +1,9 @@
+from openpyxl import load_workbook
+from openpyxl import Workbook
+from datetime import datetime, date
+wb = load_workbook('/Users/priyam/Coding Stuff/shoe_store.xlsx')
+ws = wb['Sheet1']
+
 class Shoe:
     def __init__(self, item_number, brand, model, colorway, size, price):
         self.item_num = item_number
@@ -69,31 +75,31 @@ class Actions:
             if shoe.item_num == item_num:
                 selected_shoe = shoe
         update = input("\nWhat would you like to update?\n1.Item Number\n2.Brand\n3.Model\n4.Colorway\n5.Size\n6.Price\n7.Quantity\n")
-        if update.lower() == 'item number' or update == '1':
+        if update == '1':
             number = input('new item #: ')
             selected_shoe.item_num = number
             print(selected_shoe)
-        if update.lower() == 'brand' or update == '2':
+        if update == '2':
             brand = input('new brand name: ')
             selected_shoe.brand = brand
             print(selected_shoe)
-        if update.lower() == 'model' or update == '3':
+        if update == '3':
             model = input('new model name: ')
             selected_shoe.model = model
             print(selected_shoe)
-        if update.lower() == 'new colorway' or update == '4':
+        if update == '4':
             cw = input('colorway: ')
             selected_shoe.cw = cw
             print(selected_shoe)
-        if update.lower() == 'new size' or update == '5':
+        if update == '5':
             size = input('size: ')
             selected_shoe.size = size
             print(selected_shoe)
-        if update.lower() == 'new price' or update == '6':
+        if update == '6':
             price = int(input('price: '))
             selected_shoe.price = price
             print(f"{selected_shoe}, New Price = {selected_shoe.price}")
-        if update.lower() == 'new quantity' or update == '7':
+        if update == '7':
             quantity = int(input('Quantity: '))
             inventory.add(selected_shoe, quantity)
     
@@ -126,48 +132,74 @@ class Actions:
 inventory = Inventory()
 action = Actions()
 
-#SHOES:
-J1_Bred = Shoe('1001', 'Jordan', '1', 'Bred', '11', 160)
-inventory.add(J1_Bred, 2)
-J3_wc = Shoe('1002', 'Jordan', '3', 'WC', '9', 220)
-inventory.add(J3_wc, 1)
-Kobe6_Grinch = Shoe('2001', 'Kobe', '6', 'Grinch', '10', 160)
-inventory.add(Kobe6_Grinch, 1)
-Yzy350_Zebra = Shoe('3001', 'Adidas', 'Yeezy350', 'Zebra', '6', 210)
-inventory.add(Yzy350_Zebra, 3)
+#SHOES FROM EXCEL BEING ADDED TO LIST:
+for x in ws.iter_rows(min_row=2,
+                        values_only=True):
+    shoe = Shoe(item_number=str(x[0]),
+                brand=str(x[1]),
+                model=str(x[2]),
+                colorway=str(x[3]),
+                size=str(x[4]),
+                price=int(x[5])
+                )
+    qty = int(x[6])
+    inventory.add(shoe, qty)
 inventory.show()
 
 while True:
     start_up = input('\nP11Kicks\nWould you like to:\n1.Update inventory\n2.Sell shoes from inventory\n3.Give a refund\n4.View inventory\n5.Exit\n')
-    if start_up.lower() == 'update inventory' or start_up == '1':
+    if start_up == '1':
         inventory.show()
         update_choice = input('\nWould you like to:\n1.Add a new shoe to inventory\n2.Remove a shoe from inventory\n3.Update a current shoe in inventory\n')
-        if update_choice.lower() == 'add a new shoe to inventory' or update_choice == '1':
+        if update_choice == '1':
             action.add_new_shoe_to_inventory()
-        elif update_choice.lower() == 'remove a shoe from inventory' or update_choice == '2':
+        elif update_choice == '2':
             shoe_to_remove = print('Which shoe would you like to remove?\n')
             inventory.show()
             action.remove()
-        elif update_choice.lower() == 'update a current shoe in inventory' or update_choice == '3':
+        elif update_choice == '3':
             shoe_to_update = print('Which shoe would you like to update?\n')
             inventory.show()
             action.update_shoe()
         else: print('Pick a valid option')
 
-    elif start_up.lower() == 'sell shoes from inventory' or start_up == '2':
+    elif start_up == '2':
         inventory.show()
         print('Select the shoe you want to sell:\n')
         action.sell()
 
-    elif start_up.lower() == 'give a refund' or start_up == '3':
+    elif start_up == '3':
         inventory.show()
         print('Select the shoe you want to refund:\n')
         action.refund()
 
-    elif start_up.lower() == 'view inventory' or start_up == '4':
+    elif start_up == '4':
         print('\nP11 Kicks Inventory:\nQuantity -> Brand, Model, Colorway, Size')
         inventory.show()
 
-    elif start_up.lower() == 'exit' or start_up == '5':
+    elif start_up == '5':
+        Wb = Workbook()
+        Ws = Wb.active
+        headers = ['Item #','Brand','Model','Colorway','Size','Price','Quantity']
+        Ws.append(headers)
+        for x in inventory.list_of_shoes:
+            shoe = x[0]
+            quantity = x[1]
+            data = [shoe.item_num, shoe.brand, shoe.model, shoe.cw, shoe.size, shoe.price, quantity]
+            Ws.append(data)
+            file = Wb.save('/Users/priyam/Coding Stuff/shoe_store'+datetime.now().strftime('%Y%m%d')+'.xlsx')
         break
-    else: break
+
+    else: print('Pick a valid number for a valid option')
+
+
+wb.remove(ws)
+updated_sheet = wb.create_sheet('Sheet1')
+headers = ['Item #','Brand','Model','Colorway','Size','Price','Quantity']
+updated_sheet.append(headers)
+for x in inventory.list_of_shoes:
+    shoe = x[0]
+    quantity = x[1]
+    data = [shoe.item_num, shoe.brand, shoe.model, shoe.cw, shoe.size, shoe.price, quantity]
+    updated_sheet.append(data)
+wb.save(filename='shoe_store.xlsx')
